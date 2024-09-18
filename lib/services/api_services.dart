@@ -16,7 +16,7 @@ class ApiServices {
     if (response.statusCode == 200) {
       return Result.fromJson(jsonDecode(response.body));
     }
-    throw Exception('failed to load now playing movies');
+    throw Exception('Failed to load top rated movies');
   }
 
   Future<Result> getNowPlayingMovies() async {
@@ -27,7 +27,7 @@ class ApiServices {
     if (response.statusCode == 200) {
       return Result.fromJson(jsonDecode(response.body));
     }
-    throw Exception('failed to load now playing movies');
+    throw Exception('Failed to load now playing movies');
   }
 
   Future<Result> getUpcomingMovies() async {
@@ -38,17 +38,17 @@ class ApiServices {
     if (response.statusCode == 200) {
       return Result.fromJson(jsonDecode(response.body));
     }
-    throw Exception('failed to load upcoming movies');
+    throw Exception('Failed to load upcoming movies');
   }
 
   Future<Result> getPopularMovies() async {
     const endPoint = 'movie/popular';
     const url = '$baseUrl$endPoint$key';
 
-    final response = await http.get(Uri.parse(url), headers: {});
+    final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return Result.fromJson(jsonDecode(response.body));
     }
-    throw Exception('failed to load now playing movies');
+    throw Exception('Failed to load popular movies');
   }
 }
