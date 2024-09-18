@@ -1,6 +1,5 @@
 import 'dart:convert';
-
-import 'package:movie_app/common/utils.dart';
+import 'package:movie_app/common/utils.dart'; // Certifique-se de que 'apiKey' está definido em utils.dart
 import 'package:movie_app/models/movie_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,47 +7,36 @@ const baseUrl = 'https://api.themoviedb.org/3/';
 const key = '?api_key=$apiKey';
 
 class ApiServices {
-  Future<Result> getTopRatedMovies() async {
-    var endPoint = 'movie/top_rated';
-    final url = '$baseUrl$endPoint$key';
+  // Função privada para simplificar a lógica de fetch
+  Future<Result> _fetchMovies(String endpoint) async {
+    final url = '$baseUrl$endpoint$key';
 
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      return Result.fromJson(jsonDecode(response.body));
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return Result.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception(
+            'Failed to load movies: ${response.statusCode} - ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      throw Exception('Failed to load movies: $e');
     }
-    throw Exception('Failed to load top rated movies');
+  }
+
+  Future<Result> getTopRatedMovies() async {
+    return _fetchMovies('movie/top_rated');
   }
 
   Future<Result> getNowPlayingMovies() async {
-    var endPoint = 'movie/now_playing';
-    final url = '$baseUrl$endPoint$key';
-
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      return Result.fromJson(jsonDecode(response.body));
-    }
-    throw Exception('Failed to load now playing movies');
+    return _fetchMovies('movie/now_playing');
   }
 
   Future<Result> getUpcomingMovies() async {
-    var endPoint = 'movie/upcoming';
-    final url = '$baseUrl$endPoint$key';
-
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      return Result.fromJson(jsonDecode(response.body));
-    }
-    throw Exception('Failed to load upcoming movies');
+    return _fetchMovies('movie/upcoming');
   }
 
   Future<Result> getPopularMovies() async {
-    const endPoint = 'movie/popular';
-    const url = '$baseUrl$endPoint$key';
-
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      return Result.fromJson(jsonDecode(response.body));
-    }
-    throw Exception('Failed to load popular movies');
+    return _fetchMovies('movie/popular');
   }
 }
