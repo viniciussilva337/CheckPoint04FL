@@ -16,10 +16,10 @@ class Result {
   factory Result.fromRawJson(String str) => Result.fromJson(json.decode(str));
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
-        page: json["page"],
+        page: json["page"] ?? 0,
         movies: List<Movie>.from(json["results"].map((x) => Movie.fromJson(x))),
-        totalPages: json["total_pages"],
-        totalResults: json["total_results"],
+        totalPages: json["total_pages"] ?? 0,
+        totalResults: json["total_results"] ?? 0,
       );
 }
 
@@ -61,14 +61,17 @@ class Movie {
   factory Movie.fromJson(Map<String, dynamic> json) => Movie(
         adult: json["adult"] ?? false,
         backdropPath: json["backdrop_path"] ?? '',
-        genreIds: List<int>.from(json["genre_ids"].map((x) => x)),
+        genreIds: List<int>.from(
+            json["genre_ids"] ?? []), // Ajustado para lidar com null
         id: json["id"] ?? 0,
         originalLanguage: json["original_language"] ?? '',
         originalTitle: json["original_title"] ?? '',
         overview: json["overview"] ?? '',
         popularity: json["popularity"]?.toDouble() ?? 0,
         posterPath: json["poster_path"] ?? '',
-        releaseDate: DateTime.tryParse(json["release_date"]),
+        releaseDate: json["release_date"] != null
+            ? DateTime.tryParse(json["release_date"])
+            : null, // Ajustado para lidar com formatos inválidos
         title: json["title"] ?? '',
         video: json["video"] ?? false,
         voteAverage: json["vote_average"]?.toDouble() ?? 0,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movie_app/models/movie_model.dart';
 import 'package:movie_app/pages/home/widgets/movies_horizontal_list.dart';
-import 'package:movie_app/pages/home/widgets/nowplaying_list.dart';
 import 'package:movie_app/services/api_services.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:movie_app/pages/home/widgets/favorites.dart'; // Importe a página de favoritos
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,19 +18,54 @@ class _HomePageState extends State<HomePage> {
   late Future<Result> nowPlaying;
   late Future<Result> upcoming;
 
+  int _currentPage = 0;
+
   @override
   void initState() {
+    super.initState();
     popular = apiServices.getPopularMovies();
     nowPlaying = apiServices.getNowPlayingMovies();
     upcoming = apiServices.getUpcomingMovies();
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Movie App'),
+        title: const Text('SEFI PRIME'),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('Favoritos'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FavoritesPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configurações'),
+              onTap: () {
+                // Navegar para a página de configurações (ainda não implementada)
+              },
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -39,7 +75,7 @@ class _HomePageState extends State<HomePage> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 child: Text(
-                  'Now Playing',
+                  'Vistos recentemente',
                   style: TextStyle(
                     color: Colors.white54,
                     fontWeight: FontWeight.w300,
@@ -48,28 +84,89 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               FutureBuilder(
-                  future: nowPlaying,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text('Error: ${snapshot.error}'),
-                      );
-                    }
-                    if (snapshot.hasData) {
-                      return NowPlayingList(movies: snapshot.data!.movies);
-                    }
+                future: nowPlaying,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child: Text('No data found'),
+                      child: CircularProgressIndicator(),
                     );
-                  }),
-              const SizedBox(
-                height: 20,
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    final movies = snapshot.data!.movies;
+
+                    return Column(
+                      children: [
+                        CarouselSlider.builder(
+                          itemCount: movies.length,
+                          itemBuilder: (context, index, realIndex) {
+                            final movie = movies[index];
+                            return Card(
+                              color: Colors.grey[850],
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(
+                                    'https://image.tmdb.org/t/p/w500${movie.posterPath}',
+                                    fit: BoxFit.cover,
+                                    height: 300,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  // Removido o Text do título do filme
+                                ],
+                              ),
+                            );
+                          },
+                          options: CarouselOptions(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            autoPlay: true,
+                            onPageChanged: (index, reason) {
+                              setState(() {
+                                _currentPage = index;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            4, // Limitar a 4 bolinhas
+                            (index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _currentPage = index;
+                                  });
+                                },
+                                child: Container(
+                                  width: 8.0,
+                                  height: 8.0,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 4.0),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: (Colors.white.withOpacity(
+                                        _currentPage == index ? 0.9 : 0.4)),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return const Center(
+                    child: Text('No data found'),
+                  );
+                },
               ),
+              const SizedBox(height: 20),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 child: Text(
@@ -82,26 +179,27 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               FutureBuilder(
-                  future: popular,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text('Error: ${snapshot.error}'),
-                      );
-                    }
-                    return MoviesHorizontalList(
-                      movies: snapshot.data!.movies,
+                future: popular,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
                     );
-                  }),
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  }
+                  return MoviesHorizontalList(
+                    movies: snapshot.data!.movies,
+                  );
+                },
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 child: Text(
-                  'Upcoming',
+                  'Em breve',
                   style: TextStyle(
                     color: Colors.white54,
                     fontWeight: FontWeight.w300,
@@ -110,25 +208,24 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               FutureBuilder(
-                  future: upcoming,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text('Error: ${snapshot.error}'),
-                      );
-                    }
-                    return MoviesHorizontalList(
-                      movies: snapshot.data!.movies,
+                future: upcoming,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
                     );
-                  }),
-              const SizedBox(
-                height: 20,
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  }
+                  return MoviesHorizontalList(
+                    movies: snapshot.data!.movies,
+                  );
+                },
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
